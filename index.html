@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Total Belanja</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2563eb;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px;
+            margin-top: 7px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 11px 15px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            background: #2563eb;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .hapus {
+            background: #dc2626;
+            padding: 7px 10px;
+            margin: 0;
+        }
+
+        .hitung {
+            width: 100%;
+            background: #16a34a;
+            font-size: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+        }
+
+        .hasil {
+            background: #eff6ff;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .hasil p {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .total {
+            color: #16a34a;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Aplikasi Total Belanja</h1>
+    <p style="text-align:center;">
+        Program Menghitung Total Pembelian Barang
+    </p>
+
+    <label>Nama Barang</label>
+    <input type="text" id="nama" placeholder="Masukkan nama barang">
+
+    <label>Harga Barang (Rp)</label>
+    <input type="number" id="harga" placeholder="Masukkan harga">
+
+    <label>Jumlah Barang</label>
+    <input type="number" id="jumlah" placeholder="Masukkan jumlah">
+
+    <button onclick="tambahBarang()">Tambah Barang</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Barang</th>
+                <th>Harga</th>
+                <th>Jumlah</th>
+                <th>Subtotal</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+
+        <tbody id="daftarBarang">
+            <tr>
+                <td colspan="6">Belum ada barang</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <label>Diskon (%)</label>
+    <input type="number" id="diskon" value="0" min="0" max="100">
+
+    <label>Uang Pembayaran (Rp)</label>
+    <input type="number" id="bayar" placeholder="Masukkan uang pembayaran">
+
+    <button class="hitung" onclick="hitungTotal()">
+        Hitung Total Belanja
+    </button>
+
+    <div class="hasil">
+        <p>
+            <span>Total Belanja:</span>
+            <strong id="totalBelanja">Rp 0</strong>
+        </p>
+
+        <p>
+            <span>Potongan Diskon:</span>
+            <strong id="potongan">Rp 0</strong>
+        </p>
+
+        <p>
+            <span>Total Bayar:</span>
+            <strong id="totalBayar">Rp 0</strong>
+        </p>
+
+        <p>
+            <span>Uang Pembayaran:</span>
+            <strong id="uangBayar">Rp 0</strong>
+        </p>
+
+        <p class="total">
+            <span>Kembalian:</span>
+            <strong id="kembalian">Rp 0</strong>
+        </p>
+
+        <p>
+            <span>Status:</span>
+            <strong id="status">Belum dihitung</strong>
+        </p>
+    </div>
+
+    <button onclick="resetProgram()" style="background:#64748b;">
+        Reset Program
+    </button>
+
+</div>
+
+<script>
+    let barang = [];
+
+    function formatRupiah(angka) {
+        return new Intl.NumberFormat("id-ID", {
+            style: "currency",
+            currency: "IDR",
+            maximumFractionDigits: 0
+        }).format(angka);
+    }
+
+    function tambahBarang() {
+        const nama = document.getElementById("nama").value.trim();
+        const harga = Number(document.getElementById("harga").value);
+        const jumlah = Number(document.getElementById("jumlah").value);
+
+        if (nama === "" || !Number.isSafeInteger(harga) ||
+            !Number.isSafeInteger(jumlah) ||
+            harga <= 0 || jumlah <= 0) {
+            alert("Masukkan nama, harga, dan jumlah barang dengan benar!");
+            return;
+        }
+
+        if (!Number.isSafeInteger(harga * jumlah)) {
+            alert("Subtotal terlalu besar!");
+            return;
+        }
+
+        barang.push({
+            nama: nama,
+            harga: harga,
+            jumlah: jumlah,
+            subtotal: harga * jumlah
+        });
+
+        tampilkanBarang();
+
+        document.getElementById("nama").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("jumlah").value = "";
+        document.getElementById("nama").focus();
+
+        hitungTotal();
+    }
+
+    function tampilkanBarang() {
+        const daftar = document.getElementById("daftarBarang");
+
+        daftar.innerHTML = "";
+
+        if (barang.length === 0) {
+            daftar.innerHTML =
+                '<tr><td colspan="6">Belum ada barang</td></tr>';
+            return;
+        }
+
+        barang.forEach((item, index) => {
+            const baris = document.createElement("tr");
+
+            const data = [
+                index + 1,
+                item.nama,
+                formatRupiah(item.harga),
+                item.jumlah,
+                formatRupiah(item.subtotal)
+            ];
+
+            data.forEach(nilai => {
+                const kolom = document.createElement("td");
+                kolom.textContent = nilai;
+                baris.appendChild(kolom);
+            });
+
+            const kolomAksi = document.createElement("td");
+            const tombol = document.createElement("button");
+
+            tombol.textContent = "Hapus";
+            tombol.className = "hapus";
+            tombol.onclick = () => hapusBarang(index);
+
+            kolomAksi.appendChild(tombol);
+            baris.appendChild(kolomAksi);
+
+            daftar.appendChild(baris);
+        });
+    }
+
+    function hapusBarang(index) {
+        barang.splice(index, 1);
+        tampilkanBarang();
+        hitungTotal();
+    }
+
+    function hitungTotal() {
+        const total = barang.reduce(
+            (jumlah, item) => jumlah + item.subtotal,
+            0
+        );
+
+        const diskon = Number(
+            document.getElementById("diskon").value
+        );
+
+        const bayar = Number(
+            document.getElementById("bayar").value
+        );
+
+        if (!Number.isFinite(diskon) || diskon < 0 || diskon > 100) {
+            alert("Diskon harus antara 0 sampai 100 persen!");
+            return;
+        }
+
+        if (!Number.isSafeInteger(total)) {
+            alert("Total belanja terlalu besar!");
+            return;
+        }
+
+        const potongan = total * diskon / 100;
+        const totalBayar = total - potongan;
+
+        document.getElementById("totalBelanja").textContent =
+            formatRupiah(total);
+
+        document.getElementById("potongan").textContent =
+            formatRupiah(potongan);
+
+        document.getElementById("totalBayar").textContent =
+            formatRupiah(totalBayar);
+
+        document.getElementById("uangBayar").textContent =
+            formatRupiah(bayar >= 0 ? bayar : 0);
+
+        if (document.getElementById("bayar").value === "" ||
+            !Number.isSafeInteger(bayar) || bayar < 0) {
+
+            document.getElementById("kembalian").textContent =
+                formatRupiah(0);
+
+            document.getElementById("status").textContent =
+                "Belum dibayar";
+
+        } else if (bayar >= totalBayar) {
+
+            document.getElementById("kembalian").textContent =
+                formatRupiah(bayar - totalBayar);
+
+            document.getElementById("status").textContent =
+                "Pembayaran berhasil";
+
+        } else {
+
+            document.getElementById("kembalian").textContent =
+                formatRupiah(0);
+
+            document.getElementById("status").textContent =
+                "Uang pembayaran kurang";
+        }
+    }
+
+    function resetProgram() {
+        if (!confirm("Yakin ingin menghapus semua data belanja?")) {
+            return;
+        }
+
+        barang = [];
+
+        document.getElementById("nama").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("jumlah").value = "";
+        document.getElementById("diskon").value = "0";
+        document.getElementById("bayar").value = "";
+
+        tampilkanBarang();
+        hitungTotal();
+    }
+</script>
+
+</body>
+</html>
